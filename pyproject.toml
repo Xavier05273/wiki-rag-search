@@ -3,11 +3,12 @@ name = "wiki-rag-search"
 version = "0.1.0"
 description = "Two-stage BM25 retrieval over an offline English Wikipedia corpus for LLM agents: tantivy BM25 candidate generation plus doc-id addressed full article fetch."
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "CC BY-SA 4.0" }
 requires-python = ">=3.11"
 dependencies = [
     "tantivy>=0.21.0",
     "pyarrow>=14.0.0",
+    "huggingface_hub>=0.25.0",
 ]
 
 [project.optional-dependencies]

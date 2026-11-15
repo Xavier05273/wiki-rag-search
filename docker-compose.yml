@@ -1,0 +1,11 @@
+services:
+  wiki-rag:
+    build: .
+    image: wiki-rag-search
+    container_name: wiki-rag
+    environment:
+      WIKI_RAG_INDEX_DIR: /data/tantivy_index
+      WIKI_RAG_PARQUET_DIR: /data/wiki_parquet_clean
+    volumes:
+      - ./data/wiki_parquet_clean:/data/wiki_parquet_clean
+      - ./data/tantivy_index:/data/tantivy_index

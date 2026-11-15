@@ -4,6 +4,14 @@ This package ships the *plumbing* around the offline English Wikipedia corpus. T
 corpus itself is intentionally not committed: it is multi-gigabyte and rebuilt from
 source.
 
+## Source & license
+
+- Source corpus: English Wikipedia via Kiwix.
+  - ZIM: `wikipedia_en_all_nopic_2026-06.zim` - <https://browse.library.kiwix.org/#lang=eng>
+- License: CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0 International).
+- The cleaned Parquet shards (~9 GB) are hosted on Hugging Face Datasets:
+  https://huggingface.co/datasets/Ada0220/wikipedia-en-nopic-2026-06-clean/tree/main
+
 ## Sources
 
 | Stage | Input | Output | Notes |
@@ -30,8 +38,8 @@ WIKI_RAG_INDEX_DIR=/data/tantivy_index           # <- output of build_index.py
 
 The query-time env vars are:
 
-- `WIKI_RAG_INDEX_DIR` — tantivy index directory (query tool reads here)
-- `WIKI_RAG_PARQUET_DIR` — cleaned parquet shards directory (doc-id -> full text reader)
+- `WIKI_RAG_INDEX_DIR` - tantivy index directory (query tool reads here)
+- `WIKI_RAG_PARQUET_DIR` - cleaned parquet shards directory (doc-id -> full text reader)
 
 ## Adding a new corpus
 

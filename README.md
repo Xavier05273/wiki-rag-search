@@ -1,10 +1,17 @@
 # wiki-rag-search
 
-Two-stage retrieval toolkit for **offline English Wikipedia** — a tantivy BM25
+Two-stage retrieval toolkit for **offline English Wikipedia** - a tantivy BM25
 index for candidate generation, plus a doc-id addressed full-article reader, wired
 up as agent tools.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
+[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC_BY-SA_4.0-light.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+
+## Source & license
+
+- Source corpus: English Wikipedia via Kiwix.
+  - ZIM: `wikipedia_en_all_nopic_2026-06.zim` - <https://browse.library.kiwix.org/#lang=eng>
+- License: CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0 International).
+- The cleaned Parquet shards (~9 GB) are intended to be hosted on Hugging Face Datasets.
 
 ## Why
 
@@ -29,14 +36,30 @@ agent loop ──search_wikipedia──> hits w/ doc_id/snippet ──read_artic
 - **Engine** (`wiki_rag.engine`): BM25 + reciprocal rank fusion (RRF)
 - **Reader** (`wiki_rag.reader`): doc-id -> full article text over parquet shards
 
-## Quick start
+## Quick start (Docker - primary deployment)
+
+```bash
+docker compose build
+docker compose run --rm wiki-rag   # build tantivy BM25 index from mounted cleaned parquet -> /data/tantivy_index
+
+# run the query tool against the built index
+docker compose run --rm wiki-rag python -c "from wiki_rag.tools import run_tool; print(run_tool('search_wikipedia', {'queries': ['speculative decoding'], 'top_k': 5}))"
+```
+
+- Docker is the **primary** deployment method (Linux containers; Docker Desktop on
+  Windows runs via the WSL2 backend, so it works on both Windows and Linux hosts).
+- Mount/bind `./data/wiki_parquet_clean` (cleaned ~9 GB parquet) and
+  `./data/tantivy_index` (built index, ~29 GB) via volumes in `docker-compose.yml`.
+
+## Quick start (local, no Docker)
 
 ```bash
 pip install -r requirements.txt
+pip install huggingface_hub
 
-# 1) Point the env vars at your corpus
-export WIKI_RAG_ZIM=/data/wikipedia_en_all_nopic_2026-06.zim
-export WIKI_RAG_EXTRACT_OUT_DIR=/data/wiki_parquet_shards
+# 1) Download the cleaned ~9 GB parquet from Hugging Face Datasets
+python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Ada0220/wikipedia-en-nopic-2026-06-clean', repo_type='dataset', revision='main', local_dir='/data')"
+
 export WIKI_RAG_PARQUET_DIR=/data/wiki_parquet_clean
 export WIKI_RAG_INDEX_DIR=/data/tantivy_index
 
@@ -46,6 +69,17 @@ python scripts/build_index.py
 # 3) Run the query tool
 python -c "from wiki_rag.tools import run_tool; print(run_tool('search_wikipedia', {'queries': ['speculative decoding'], 'top_k': 5}))"
 ```
+
+No need to download a ~50 GB ZIM and transcode: the cleaned ~9 GB Parquet is the
+input to the index builder; the extract/clean/strip scripts remain in `scripts/`
+for reference.
+
+## Windows note
+
+- **Query side** (index build / search / read): expected to work natively on Windows
+  (tantivy + pyarrow; tantivy may require a source build with Rust if no Windows wheel is published).
+- **Extract side** (ZIM -> Parquet): **requires a Linux environment** (libzim /
+  selectolax / multiprocessing handling). Do this stage in WSL or a Linux VM.
 
 ## Tool reference
 
@@ -82,4 +116,4 @@ pytest tests/
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+CC BY-SA 4.0: see [LICENSE](./LICENSE).
