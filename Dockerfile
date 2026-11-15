@@ -4,22 +4,22 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/src \
     WIKI_RAG_INDEX_DIR=/data/tantivy_index \
-    WIKI_RAG_PARQUET_DIR=/data/wiki_parquet_clean
+    WIKI_RAG_PARQUET_DIR=/data
 
 WORKDIR /app
 
-# tantivy / pyarrow / huggingface_hub wheels bundle their own native deps;
-# only CA certificates are needed for the Hugging Face Datasets download.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates tar \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir "tantivy>=0.21.0" "pyarrow>=14.0.0" "huggingface_hub>=0.25.0"
+RUN pip install --no-cache-dir "tantivy>=0.21.0" "pyarrow>=14.0.0" "huggingface_hub>=0.25.0" "pytest>=7.0.0"
 
 COPY pyproject.toml requirements.txt ./
 COPY src ./src
-COPY scripts/build_index.py ./scripts/build_index.py
+COPY scripts ./scripts
+COPY tests ./tests
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
-# Default: build the tantivy BM25 index from the mounted cleaned parquet shards.
-# Override with: docker compose run --rm wiki-rag python -c "from wiki_rag.tools import run_tool; ..."
-CMD ["python", "scripts/build_index.py"]
+RUN chmod +x ./docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

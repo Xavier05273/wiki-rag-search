@@ -36,20 +36,21 @@ agent loop ──search_wikipedia──> hits w/ doc_id/snippet ──read_artic
 - **Engine** (`wiki_rag.engine`): BM25 + reciprocal rank fusion (RRF)
 - **Reader** (`wiki_rag.reader`): doc-id -> full article text over parquet shards
 
-## Quick start (Docker - primary deployment)
+## Quick start (Docker)
 
 ```bash
+# 1) Build Docker image
 docker compose build
-docker compose run --rm wiki-rag   # build tantivy BM25 index from mounted cleaned parquet -> /data/tantivy_index
 
-# run the query tool against the built index
+# 2) Run smoke test / verification (auto-unpacks pre-built index if present)
+docker compose run --rm wiki-rag
+
+# 3) Run a query against the index
 docker compose run --rm wiki-rag python -c "from wiki_rag.tools import run_tool; print(run_tool('search_wikipedia', {'queries': ['speculative decoding'], 'top_k': 5}))"
 ```
 
-- Docker is the **primary** deployment method (Linux containers; Docker Desktop on
-  Windows runs via the WSL2 backend, so it works on both Windows and Linux hosts).
-- Mount/bind `./data/wiki_parquet_clean` (cleaned ~9 GB parquet) and
-  `./data/tantivy_index` (built index, ~5.5 GB) via volumes in `docker-compose.yml`.
+- Mount/bind `./data` to `/data` in `docker-compose.yml`.
+- If `./data/tantivy_index_v1.tar` is present, the container auto-unpacks it upon launch.
 
 ## Quick start (local, no Docker)
 
