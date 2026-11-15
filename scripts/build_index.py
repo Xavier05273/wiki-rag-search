@@ -73,15 +73,15 @@ def build() -> int:
     os.makedirs(INDEX_DIR, exist_ok=True)
 
     schema_builder = tantivy.SchemaBuilder()
-    schema_builder.add_unsigned_field("doc_id", stored=True, indexed=True, fast=True)
-    schema_builder.add_text_field("title", stored=True, fast=True)
-    schema_builder.add_text_field("aliases", stored=True, fast=True)
-    schema_builder.add_text_field("summary", stored=True, fast=True)
-    schema_builder.add_text_field("body", stored=True)
+    schema_builder.add_unsigned_field("doc_id", stored=True, indexed=True)
+    schema_builder.add_text_field("title", stored=True, tokenizer_name="en_stem")
+    schema_builder.add_text_field("aliases", stored=False, index_option="freq", tokenizer_name="en_stem")
+    schema_builder.add_text_field("summary", stored=True, tokenizer_name="en_stem")
+    schema_builder.add_text_field("body", stored=False, index_option="freq", tokenizer_name="en_stem")
     schema = schema_builder.build()
 
     index = tantivy.Index(schema, path=INDEX_DIR)
-    writer = index.writer(heap_size=500_000_000)
+    writer = index.writer(heap_size=2_000_000_000)
 
     total = 0
     t0 = time.time()
@@ -132,7 +132,17 @@ def build() -> int:
     print("正在執行最終提交與段合併 (Final Commit & Merge)...", flush=True)
     writer.commit()
     writer.wait_merging_threads()
-    print("BUILD_DONE", total, "elapsed", round(time.time() - t0, 1))
+    elapsed = round(time.time() - t0, 1)
+
+    total_idx_size = sum(os.path.getsize(os.path.join(INDEX_DIR, f)) for f in os.listdir(INDEX_DIR))
+    print(f"BUILD_DONE: {total:,} docs in {elapsed}s | 索引總大小: {total_idx_size / (1024**3):.2f} GB", flush=True)
+
+    tar_path = os.path.join(os.path.dirname(INDEX_DIR), "tantivy_index_v1.tar")
+    print(f"正在打包索引至 {tar_path}...", flush=True)
+    import subprocess
+    subprocess.run(["tar", "-cf", tar_path, "-C", os.path.dirname(INDEX_DIR), os.path.basename(INDEX_DIR)], check=True)
+    tar_size = os.path.getsize(tar_path) / (1024**3)
+    print(f"打包完成！{tar_path} 總大小: {tar_size:.2f} GB", flush=True)
     return total
 
 

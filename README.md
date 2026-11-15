@@ -49,7 +49,7 @@ docker compose run --rm wiki-rag python -c "from wiki_rag.tools import run_tool;
 - Docker is the **primary** deployment method (Linux containers; Docker Desktop on
   Windows runs via the WSL2 backend, so it works on both Windows and Linux hosts).
 - Mount/bind `./data/wiki_parquet_clean` (cleaned ~9 GB parquet) and
-  `./data/tantivy_index` (built index, ~29 GB) via volumes in `docker-compose.yml`.
+  `./data/tantivy_index` (built index, ~5.5 GB) via volumes in `docker-compose.yml`.
 
 ## Quick start (local, no Docker)
 
@@ -57,14 +57,17 @@ docker compose run --rm wiki-rag python -c "from wiki_rag.tools import run_tool;
 pip install -r requirements.txt
 pip install huggingface_hub
 
-# 1) Download the cleaned ~9 GB parquet from Hugging Face Datasets
+# 1) Download the cleaned Parquet shards + pre-built Tantivy index (~14.5 GB total)
 python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Ada0220/wikipedia-en-nopic-2026-06-clean', repo_type='dataset', revision='main', local_dir='/data')"
 
 export WIKI_RAG_PARQUET_DIR=/data/wiki_parquet_clean
 export WIKI_RAG_INDEX_DIR=/data/tantivy_index
 
-# 2) Build the index (reads cleaned parquet shards)
-python scripts/build_index.py
+# 2) Unpack the pre-built Tantivy BM25 index (~5.5 GB, ready to search immediately)
+tar -xf /data/tantivy_index_v1.tar -C /data
+
+# (Optional) Or rebuild the index from scratch with custom schema (~12 mins)
+# python scripts/build_index.py
 
 # 3) Run the query tool
 python -c "from wiki_rag.tools import run_tool; print(run_tool('search_wikipedia', {'queries': ['speculative decoding'], 'top_k': 5}))"

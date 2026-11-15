@@ -6,8 +6,8 @@ from typing import Any
 
 import tantivy
 
-DEFAULT_FIELD_BOOSTS = {"title": 5.0, "aliases": 3.0, "body": 1.0}
-DEFAULT_SEARCH_FIELDS = ["title", "aliases", "body"]
+DEFAULT_FIELD_BOOSTS = {"title": 5.0, "aliases": 3.0, "summary": 2.0, "body": 1.0}
+DEFAULT_SEARCH_FIELDS = ["title", "aliases", "summary", "body"]
 RRF_K = 60
 
 
@@ -35,17 +35,20 @@ class WikiSearchEngine:
             query_str, self.search_fields, field_boosts=self.field_boosts
         )
         hits = self.searcher.search(query, limit=fetch_k).hits
-        snippet_gen = tantivy.SnippetGenerator.create(self.searcher, query, self.schema, "body")
+        snippet_gen = tantivy.SnippetGenerator.create(self.searcher, query, self.schema, "summary")
         results = []
         for rank, (score, doc_addr) in enumerate(hits, start=1):
             doc = self.searcher.doc(doc_addr)
             raw_snip = snippet_gen.snippet_from_doc(doc).to_html()
+            snip_text = self._format_snippet(raw_snip)
+            if not snip_text:
+                snip_text = doc.get_first("summary") or ""
             results.append(
                 {
                     "doc_id": doc.get_first("doc_id"),
                     "title": doc.get_first("title"),
                     "summary": doc.get_first("summary"),
-                    "snippet": self._format_snippet(raw_snip),
+                    "snippet": snip_text,
                     "query": query_str,
                     "rank": rank,
                     "bm25_score": score,
