@@ -4,13 +4,14 @@ Two-stage retrieval toolkit for **offline English Wikipedia** - a tantivy BM25
 index for candidate generation, plus a doc-id addressed full-article reader, wired
 up as agent tools.
 
-[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC_BY-SA_4.0-light.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![License: MIT](https://img.shields.io/badge/Code_License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Corpus License: CC BY-SA 4.0](https://img.shields.io/badge/Corpus_License-CC_BY--SA_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
 ## Source & license
 
-- Source corpus: English Wikipedia via Kiwix.
-  - ZIM: `wikipedia_en_all_nopic_2026-06.zim` - <https://browse.library.kiwix.org/#lang=eng>
-- License: CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0 International).
+- **Code & tooling license**: [MIT License](./LICENSE)
+- **Corpus & data license**: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) (Creative Commons Attribution-ShareAlike 4.0 International).
+  - Source: English Wikipedia via Kiwix (`wikipedia_en_all_nopic_2026-06.zim` - <https://browse.library.kiwix.org/#lang=eng>)
 - Hosted on Hugging Face Datasets: [Ada0220/wikipedia-en-nopic-2026-06-clean](https://huggingface.co/datasets/Ada0220/wikipedia-en-nopic-2026-06-clean)
   - Cleaned Parquet shards: ~9.2 GB (286 shards)
   - Pre-built Tantivy BM25 index: `tantivy_index_v1.tar` (~5.5 GB)
@@ -136,4 +137,5 @@ pytest tests/
 
 ## License
 
-CC BY-SA 4.0: see [LICENSE](./LICENSE).
+- **Code & tooling**: [MIT License](./LICENSE)
+- **Wikipedia corpus & data**: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
