@@ -1,0 +1,24 @@
+[project]
+name = "wiki-rag-search"
+version = "0.1.0"
+description = "Two-stage BM25 retrieval over an offline English Wikipedia corpus for LLM agents: tantivy BM25 candidate generation plus doc-id addressed full article fetch."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "tantivy>=0.21.0",
+    "pyarrow>=14.0.0",
+]
+
+[project.optional-dependencies]
+extract = [
+    "libzim>=4.0.0",
+    "selectolax>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

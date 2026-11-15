@@ -1,0 +1,4 @@
+tantivy>=0.21.0
+pyarrow>=14.0.0
+libzim>=4.0.0
+selectolax>=1.0.0
