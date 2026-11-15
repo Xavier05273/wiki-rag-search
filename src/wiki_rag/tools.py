@@ -1,13 +1,94 @@
 """Wikipedia RAG two-stage tool wiring: search_wikipedia + read_articles."""
 
 import os
+import tarfile
+from pathlib import Path
 from typing import Any
 
 from .engine import WikiSearchEngine
 from .reader import WikiArticleReader
 
-INDEX_DIR = os.environ.get("WIKI_RAG_INDEX_DIR") or "/home/minch/wiki_rag/tantivy_index"
-PARQUET_DIR = os.environ.get("WIKI_RAG_PARQUET_DIR") or "/mnt/d/wiki_parquet_clean"
+
+def resolve_index_dir() -> str:
+    """Resolve tantivy index directory, or auto-unpack from tarball if available."""
+    env_dir = os.environ.get("WIKI_RAG_INDEX_DIR")
+
+    # 1. If explicit env var is given
+    if env_dir:
+        p = Path(env_dir)
+        if p.is_dir() and (p / "meta.json").exists():
+            return str(p)
+        # Check if tarball exists nearby to unpack
+        tar_candidates = [
+            p.parent / "tantivy_index_v1.tar",
+            p / "tantivy_index_v1.tar",
+            Path(p.name + "_v1.tar"),
+        ]
+        for tar_path in tar_candidates:
+            if tar_path.is_file():
+                print(f"[wiki_rag] Found pre-built index tarball: {tar_path}. Unpacking to {p.parent}...")
+                with tarfile.open(tar_path, "r") as tf:
+                    tf.extractall(path=p.parent)
+                if p.is_dir() and (p / "meta.json").exists():
+                    print(f"[wiki_rag] Index unpacked successfully to {p}")
+                    return str(p)
+
+    # 2. Check default relative and system directories
+    default_candidates = [
+        Path("./data/tantivy_index"),
+        Path("./tantivy_index"),
+        Path("/data/tantivy_index"),
+    ]
+    for p in default_candidates:
+        if p.is_dir() and (p / "meta.json").exists():
+            return str(p)
+
+    # Check for tarball in default locations
+    default_tar_candidates = [
+        Path("./data/tantivy_index_v1.tar"),
+        Path("./tantivy_index_v1.tar"),
+        Path("/data/tantivy_index_v1.tar"),
+    ]
+    for tar_path in default_tar_candidates:
+        if tar_path.is_file():
+            target_parent = tar_path.parent
+            print(f"[wiki_rag] Found pre-built index tarball: {tar_path}. Unpacking to {target_parent}...")
+            with tarfile.open(tar_path, "r") as tf:
+                tf.extractall(path=target_parent)
+            unpacked_dir = target_parent / "tantivy_index"
+            if unpacked_dir.is_dir():
+                print(f"[wiki_rag] Index unpacked successfully to {unpacked_dir}")
+                return str(unpacked_dir)
+
+    # 3. Local author fallback
+    author_path = Path("/home/minch/wiki_rag/tantivy_index")
+    if author_path.is_dir() and (author_path / "meta.json").exists():
+        return str(author_path)
+
+    return env_dir or str(Path("./data/tantivy_index"))
+
+
+def resolve_parquet_dir() -> str:
+    """Resolve directory containing parquet shards."""
+    env_dir = os.environ.get("WIKI_RAG_PARQUET_DIR")
+    candidates = []
+    if env_dir:
+        candidates.append(Path(env_dir))
+    candidates.extend([
+        Path("./data/wiki_parquet_clean"),
+        Path("./data"),
+        Path("/data/wiki_parquet_clean"),
+        Path("/data"),
+        Path("/mnt/d/wiki_parquet_clean"),
+    ])
+    for p in candidates:
+        if p.is_dir() and (list(p.glob("*.parquet")) or list(p.glob("*/*.parquet"))):
+            return str(p)
+    return str(candidates[0] if candidates else Path("./data"))
+
+
+INDEX_DIR = resolve_index_dir()
+PARQUET_DIR = resolve_parquet_dir()
 
 SEARCH_TOOL = {
     "name": "search_wikipedia",

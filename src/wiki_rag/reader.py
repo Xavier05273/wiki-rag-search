@@ -15,6 +15,14 @@ class WikiArticleReader:
         self.shard_size = shard_size
         self.shard_files = sorted(self.parquet_dir.glob("*.parquet"))
         if not self.shard_files:
+            # Fallback 1: check subfolder like wiki_parquet_clean
+            sub_dir = self.parquet_dir / "wiki_parquet_clean"
+            if sub_dir.is_dir():
+                self.shard_files = sorted(sub_dir.glob("*.parquet"))
+        if not self.shard_files:
+            # Fallback 2: recursive search one level down
+            self.shard_files = sorted(self.parquet_dir.glob("*/*.parquet"))
+        if not self.shard_files:
             raise FileNotFoundError(f"In {parquet_dir} 找不到任何 .parquet 分片檔案")
 
     def read_articles(

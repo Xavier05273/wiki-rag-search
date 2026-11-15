@@ -53,20 +53,34 @@ docker compose run --rm wiki-rag python -c "from wiki_rag.tools import run_tool;
 
 ## Quick start (local, no Docker)
 
+### Option A: One-click setup (Recommended)
+
+Automatically downloads dependencies, grabs the Hugging Face dataset + pre-built index, auto-unpacks it, and runs verification tests in under 1 minute:
+
+```bash
+# Linux / macOS / WSL:
+bash scripts/setup.sh
+
+# Windows (PowerShell):
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+```
+
+### Option B: Manual step-by-step
+
 ```bash
 pip install -r requirements.txt
 pip install huggingface_hub
 
 # 1) Download the cleaned Parquet shards + pre-built Tantivy index (~14.5 GB total)
-python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Ada0220/wikipedia-en-nopic-2026-06-clean', repo_type='dataset', revision='main', local_dir='/data')"
+python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Ada0220/wikipedia-en-nopic-2026-06-clean', repo_type='dataset', revision='main', local_dir='./data')"
 
-export WIKI_RAG_PARQUET_DIR=/data/wiki_parquet_clean
-export WIKI_RAG_INDEX_DIR=/data/tantivy_index
+export WIKI_RAG_PARQUET_DIR=./data
+export WIKI_RAG_INDEX_DIR=./data/tantivy_index
 
 # 2) Unpack the pre-built Tantivy BM25 index (~5.5 GB, ready to search immediately)
-tar -xf /data/tantivy_index_v1.tar -C /data
+tar -xf ./data/tantivy_index_v1.tar -C ./data
 
-# (Optional) Or rebuild the index from scratch with custom schema (~12 mins)
+# (Optional) Or rebuild the index from scratch if modifying schema (~12 mins)
 # python scripts/build_index.py
 
 # 3) Run the query tool
