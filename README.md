@@ -11,7 +11,9 @@ up as agent tools.
 - Source corpus: English Wikipedia via Kiwix.
   - ZIM: `wikipedia_en_all_nopic_2026-06.zim` - <https://browse.library.kiwix.org/#lang=eng>
 - License: CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0 International).
-- The cleaned Parquet shards (~9 GB) are intended to be hosted on Hugging Face Datasets.
+- Hosted on Hugging Face Datasets: [Ada0220/wikipedia-en-nopic-2026-06-clean](https://huggingface.co/datasets/Ada0220/wikipedia-en-nopic-2026-06-clean)
+  - Cleaned Parquet shards: ~9.2 GB (286 shards)
+  - Pre-built Tantivy BM25 index: `tantivy_index_v1.tar` (~5.5 GB)
 
 ## Why
 
