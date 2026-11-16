@@ -1,7 +1,7 @@
 ---
 name: wiki-rag-search
 description: Two-stage offline Wikipedia retrieval toolkit. BM25 candidate search over 7.1M articles followed by doc_id addressed full-text reading.
-version: 0.1.0
+version: 0.1.1
 author: Xavier05273
 license: MIT
 platforms: [linux, windows, darwin]
@@ -14,7 +14,7 @@ metadata:
 # Wiki RAG Search Skill
 
 Two-stage retrieval over the offline English Wikipedia corpus (~7.13 million articles):
-1. **Stage 1 (`search_wikipedia`)**: BM25 keyword search across title, aliases, lead summary, and body with Reciprocal Rank Fusion (RRF). Returns top hits with `doc_id`, title, summary, and bolded matched snippets.
+1. **Stage 1 (`search_wikipedia`)**: BM25 keyword search across title, aliases, lead summary, and body with Reciprocal Rank Fusion (RRF). Returns top hits with `doc_id`, title, summary, and bolded matched snippets (`matched_snippets`). Soft redirects (such as Wiktionary look up stubs) are automatically deprioritized.
 2. **Stage 2 (`read_articles`)**: Direct `doc_id` addressed reader fetching the clean full text from local Parquet shards in milliseconds.
 
 ---
@@ -120,7 +120,7 @@ Search offline Wikipedia using BM25 with multi-query Reciprocal Rank Fusion (RRF
   * `doc_id` (*int*): Unique integer ID used to fetch full text.
   * `title` (*str*): Wikipedia article title.
   * `summary` (*str*): Lead section summary (up to 350 characters).
-  * `matched_snippets` (*list[str]*): Snippet with markdown bolding (`**term**`) indicating term matches.
+  * `matched_snippets` (*list[str]*): Snippet with markdown bolding (`**term**`) indicating term matches generated from lead summary.
   * `hit_queries` (*list[str]*, only in multi-query): Queries that matched this document.
 
 ### `read_articles`
@@ -147,3 +147,12 @@ Directly read the full text of specified Wikipedia articles by their `doc_id`.
 3. **Data Source Distinction**:
    - The Tantivy BM25 index stores only search metadata and lead summaries (~5.5 GB).
    - Full article content is read on-demand from the Parquet shards (~9.2 GB).
+
+---
+
+## Runtime Invocation (verified on this host)
+
+- Must run with the project venv interpreter: `/home/minch/wiki_rag/.venv/bin/python` (has tantivy 0.27.0 + pyarrow 26.0.1; the Hermes default python lacks tantivy and will fail to import).
+- Package source lives at `/home/minch/wiki-rag-search/src`, so set `PYTHONPATH=/home/minch/wiki-rag-search/src` (or pip install -e).
+- Env defaults already correct: `WIKI_RAG_INDEX_DIR=/home/minch/wiki_rag/tantivy_index`, `WIKI_RAG_PARQUET_DIR=/mnt/d/wiki_parquet_clean`.
+- Do not use the legacy flat-module variant at `/home/minch/wiki_rag/wiki_rag_tools.py` (uses `from wiki_article_reader import ...` and hardcoded dirs).
