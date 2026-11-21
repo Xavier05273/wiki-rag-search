@@ -60,10 +60,10 @@ def resolve_index_dir() -> str:
                 print(f"[wiki_rag] Index unpacked successfully to {unpacked_dir}")
                 return str(unpacked_dir)
 
-    # 3. Local author fallback
-    author_path = Path("/home/minch/wiki_rag/tantivy_index")
-    if author_path.is_dir() and (author_path / "meta.json").exists():
-        return str(author_path)
+    # 3. User home fallback (if present)
+    user_home_candidate = Path.home() / "wiki_rag" / "tantivy_index"
+    if user_home_candidate.is_dir() and (user_home_candidate / "meta.json").exists():
+        return str(user_home_candidate)
 
     return env_dir or str(Path("./data/tantivy_index"))
 
@@ -198,8 +198,8 @@ def run_tool(name: str, arguments: dict) -> Any:
     raise ValueError(f"unknown tool: {name}")
 
 
-SYSTEM_PROMPT_ADDITION = """## Wikipedia 檢索工作流程（兩階段）
+SYSTEM_PROMPT_ADDITION = """## Wikipedia Retrieval Workflow (Two-Stage)
 
-- 先搜後讀：需要查證的問題，先呼叫 `search_wikipedia`（建議一次給 2 組不同切入點的英文關鍵字），審閱回傳的標題與加粗命中片段。
-- 精準讀取：從搜尋結果中挑選 1 至 3 個最相關的 `doc_id` 呼叫 `read_articles` 取得全文；若第一輪片段顯示關鍵字偏移，允許再呼叫一次 `search_wikipedia` 換詞重搜，不要直接憑記憶編造細節。
+- Search first, then read: When verifying facts, call `search_wikipedia` first (provide 2 complementary English keyword queries) and review the returned titles and bolded matched snippets.
+- Precise reading: Select the 1 to 3 most relevant `doc_id`s from search results and call `read_articles` to fetch full text. If initial snippets indicate query drift, re-run `search_wikipedia` with refined keywords rather than hallucinating details from memory.
 """

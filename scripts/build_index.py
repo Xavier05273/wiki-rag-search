@@ -10,8 +10,32 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import tantivy
 
-PARQUET_DIR = os.environ.get("WIKI_RAG_PARQUET_DIR") or "/mnt/d/wiki_parquet_clean"
-INDEX_DIR = os.environ.get("WIKI_RAG_INDEX_DIR") or "/home/minch/wiki_rag/tantivy_index"
+def _resolve_default_parquet_dir() -> str:
+    env = os.environ.get("WIKI_RAG_PARQUET_DIR")
+    if env:
+        return env
+    for candidate in ["./data", "./data/wiki_parquet_clean", "/mnt/d/wiki_parquet_clean"]:
+        if os.path.isdir(candidate):
+            return candidate
+    return "./data"
+
+
+def _resolve_default_index_dir() -> str:
+    env = os.environ.get("WIKI_RAG_INDEX_DIR")
+    if env:
+        return env
+    for candidate in [
+        "./data/tantivy_index",
+        "./tantivy_index",
+        os.path.expanduser("~/wiki_rag/tantivy_index"),
+    ]:
+        if os.path.isdir(candidate):
+            return candidate
+    return "./data/tantivy_index"
+
+
+PARQUET_DIR = _resolve_default_parquet_dir()
+INDEX_DIR = _resolve_default_index_dir()
 SHARD_SIZE = 25_000
 LEAD_SUMMARY_MAX_CHARS = 350
 
@@ -65,10 +89,10 @@ def extract_lead_summary(text: str, max_chars: int = LEAD_SUMMARY_MAX_CHARS, tit
 def build() -> int:
     shard_files = sorted(glob.glob(os.path.join(PARQUET_DIR, "wiki_en_*.parquet")))
     if not shard_files:
-        raise FileNotFoundError(f"找不到任何分片檔案在 {PARQUET_DIR}")
+        raise FileNotFoundError(f"No shard files found in {PARQUET_DIR}")
 
     if os.path.exists(INDEX_DIR):
-        print(f"清空舊索引目錄 {INDEX_DIR}...", flush=True)
+        print(f"Removing old index directory {INDEX_DIR}...", flush=True)
         shutil.rmtree(INDEX_DIR, ignore_errors=True)
     os.makedirs(INDEX_DIR, exist_ok=True)
 
@@ -86,7 +110,7 @@ def build() -> int:
     total = 0
     t0 = time.time()
     total_shards = len(shard_files)
-    print(f"開始建置索引，共 {total_shards} 個分片...", flush=True)
+    print(f"Starting index build across {total_shards} shards...", flush=True)
 
     for shard_idx, fp in enumerate(shard_files):
         table = pq.read_table(fp)
@@ -125,24 +149,24 @@ def build() -> int:
 
             gc.collect()
             pyarrow.default_memory_pool().release_unused()
-            print(f"[Checkpoint] Shard {shard_idx+1}/{total_shards} committed (total {total:,} docs) in {time.time()-t_c0:.1f}s | 記憶體已釋放", flush=True)
+            print(f"[Checkpoint] Shard {shard_idx+1}/{total_shards} committed (total {total:,} docs) in {time.time()-t_c0:.1f}s | memory released", flush=True)
 
         print(f"shard {shard_idx} done, total {total:,}, elapsed {time.time()-t0:.1f}s", flush=True)
 
-    print("正在執行最終提交與段合併 (Final Commit & Merge)...", flush=True)
+    print("Executing final commit and segment merge...", flush=True)
     writer.commit()
     writer.wait_merging_threads()
     elapsed = round(time.time() - t0, 1)
 
     total_idx_size = sum(os.path.getsize(os.path.join(INDEX_DIR, f)) for f in os.listdir(INDEX_DIR))
-    print(f"BUILD_DONE: {total:,} docs in {elapsed}s | 索引總大小: {total_idx_size / (1024**3):.2f} GB", flush=True)
+    print(f"BUILD_DONE: {total:,} docs in {elapsed}s | Total index size: {total_idx_size / (1024**3):.2f} GB", flush=True)
 
     tar_path = os.path.join(os.path.dirname(INDEX_DIR), "tantivy_index_v1.tar")
-    print(f"正在打包索引至 {tar_path}...", flush=True)
+    print(f"Archiving index to {tar_path}...", flush=True)
     import subprocess
     subprocess.run(["tar", "-cf", tar_path, "-C", os.path.dirname(INDEX_DIR), os.path.basename(INDEX_DIR)], check=True)
     tar_size = os.path.getsize(tar_path) / (1024**3)
-    print(f"打包完成！{tar_path} 總大小: {tar_size:.2f} GB", flush=True)
+    print(f"Archive complete: {tar_path} total size: {tar_size:.2f} GB", flush=True)
     return total
 
 

@@ -150,9 +150,10 @@ Directly read the full text of specified Wikipedia articles by their `doc_id`.
 
 ---
 
-## Runtime Invocation (verified on this host)
+## Runtime & Environment Configuration
 
-- Must run with the project venv interpreter: `/home/minch/wiki_rag/.venv/bin/python` (has tantivy 0.27.0 + pyarrow 26.0.1; the Hermes default python lacks tantivy and will fail to import).
-- Package source lives at `/home/minch/wiki-rag-search/src`, so set `PYTHONPATH=/home/minch/wiki-rag-search/src` (or pip install -e).
-- Env defaults already correct: `WIKI_RAG_INDEX_DIR=/home/minch/wiki_rag/tantivy_index`, `WIKI_RAG_PARQUET_DIR=/mnt/d/wiki_parquet_clean`.
-- Do not use the legacy flat-module variant at `/home/minch/wiki_rag/wiki_rag_tools.py` (uses `from wiki_article_reader import ...` and hardcoded dirs).
+- **Dependencies**: Ensure required packages (`tantivy`, `pyarrow`, `huggingface_hub`) are installed in your Python environment.
+- **Package Path**: Include `src` in `PYTHONPATH` (e.g., `export PYTHONPATH=src` or run `pip install -e .`).
+- **Data Directories**: By default, searches `./data/tantivy_index` and `./data` (or automatically unpacks `tantivy_index_v1.tar` if present). Override when needed using environment variables:
+  - `WIKI_RAG_INDEX_DIR`: Path to the `tantivy_index` directory.
+  - `WIKI_RAG_PARQUET_DIR`: Path to the Parquet shards directory.

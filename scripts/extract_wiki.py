@@ -30,7 +30,7 @@ TAIL_HEADINGS = {
 
 def build_redirect_map(zim_path: str):
     if os.path.exists(CACHE_PATH):
-        print(f"偵測到快取檔 {CACHE_PATH}，直接載入階段一結果...")
+        print(f"Found cache file {CACHE_PATH}, loading stage 1 results...")
         with open(CACHE_PATH, "rb") as f:
             return pickle.load(f)
 
@@ -41,7 +41,7 @@ def build_redirect_map(zim_path: str):
 
     for idx in range(total):
         if idx > 0 and idx % 2_000_000 == 0:
-            print(f"  已掃描 {idx:,} / {total:,} 筆...")
+            print(f"  Scanned {idx:,} / {total:,} entries...")
         entry = zim.get_entry_by_id(idx)
         title = entry.title
         if title.startswith(EXCLUDE_PREFIXES):
@@ -57,7 +57,7 @@ def build_redirect_map(zim_path: str):
     result = (valid_entries, dict(redirects_map))
     with open(CACHE_PATH, "wb") as f:
         pickle.dump(result, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"已將階段一索引快取儲存至 {CACHE_PATH}")
+    print(f"Saved stage 1 cache to {CACHE_PATH}")
     return result
 
 

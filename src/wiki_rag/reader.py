@@ -23,7 +23,7 @@ class WikiArticleReader:
             # Fallback 2: recursive search one level down
             self.shard_files = sorted(self.parquet_dir.glob("*/*.parquet"))
         if not self.shard_files:
-            raise FileNotFoundError(f"In {parquet_dir} 找不到任何 .parquet 分片檔案")
+            raise FileNotFoundError(f"No .parquet shard files found in {parquet_dir}")
 
     def read_articles(
         self,
